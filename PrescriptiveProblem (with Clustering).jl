@@ -45,6 +45,19 @@ function n(t,w)
 return n
 end
 
+function t(n)
+    if n == 1
+        t = 1
+    elseif n in 2:3
+        t = 2
+    elseif n in 4:7
+        t = 3
+    else
+        t = 4
+    end
+return t
+end
+
 
 # Parametros do caso
 Ω = 200
@@ -88,37 +101,39 @@ media_PLD = [
     mean(X12[4,:,:]), mean(X13[4,:,:]),
     mean(X14[4,:,:]), mean(X15[4,:,:])
 ]
-λ = 0.93.*media_PLD .+15.31     # Preço contrato semanal
+F = 0.93.*media_PLD .+15.31     # Preço contrato semanal
 Q = 100                         # Quantidade do contrato mensal
 P = 0.93*mean(PLD) +20          # Preço contrato mensal
 
 # Parametros de risco
 p = 1 / Ω .* ones(Ω);
 α = 0.95
-ξ = 0.5
+λ = 0.5
 
 # Otimização
 
 model = Model(Gurobi.Optimizer)
 
 @variable(model, R[1:T,1:Ω])
-@variable(model, z)
-@variable(model, δ[1:Ω] >= 0)
+@variable(model, z1)
+@variable(model, z2[1:15])
+@variable(model, δ1[1:Ω] >= 0)
+@variable(model, δ2[1:Ω,1:T] >= 0)
 @variable(model, x[1:15])
 @variable(model, y)
 
 @objective(
     model,
     Max,
-    ξ * (z - sum(δ[w] * p[w] / (1 - α) for w in 1:Ω)) +
-    (1 - ξ) * sum(p[w] *sum(R[t,w] for t in 1:T) for w in 1:Ω)
+    λ * (z1 - sum(δ1[w] * p[w] / (1 - α) for w in 1:Ω)) +
+    (1 - λ) * sum(p[w] *sum(R[t,w] for t in 1:T) for w in 1:Ω)
 );
 
 @constraint(
     model,
     [t ∈ 1:T, w ∈ 1:Ω],
     R[t,w] ==
-    sum((g[t,h,w]*GF*PLD[t,h,w]) + (P - PLD[t,h,w])*Q*y + (λ[n(t,w)] - PLD[t,h,w])*q*x[n(t,w)] for h in 1:H)
+    sum((g[t,h,w]*GF*PLD[t,h,w]) + (P - PLD[t,h,w])*Q*y + (F[n(t,w)] - PLD[t,h,w])*q*x[n(t,w)] for h in 1:H)
 );
 
 @constraint(model, [t ∈ 1:T, w ∈ 1:Ω], Q*y + q*x[n(t,w)] <= GF)
@@ -131,12 +146,28 @@ model = Model(Gurobi.Optimizer)
 
 @constraint(model, y <= ymax)
 
-@constraint(model, z - 1/(1-α)*sum(p[w]*δ[w] for w in 1:Ω) >= 0)
+@constraint(model, z1 - 1/(1-α)*sum(p[w]*δ1[w] for w in 1:Ω) >= 0)
 
-@constraint(model, [w ∈ 1:Ω], δ[w] >= z - sum(R[t,w] for t in 1:T))
+@constraint(model, [w ∈ 1:Ω], δ1[w] >= z1 - sum(R[t,w] for t in 1:T))
+
+# CVaR semanal
+
+@constraint(model, [n ∈ 1:15], z2[n] - 1/(1-α)*sum(p[w]*δ2[w,t(n)] for w in 1:Ω) >= 1e5*7)
+
+@constraint(model, [w ∈ 1:Ω, t ∈ 1:T], δ2[w,t] >= z2[n(t,w)] - R[t,w])
 
 status = optimize!(model)
 x_otimo = JuMP.value.(x)
 y_otimo = JuMP.value(y)
 R_otimo = JuMP.value.(R)
 resp = JuMP.objective_value(model)
+
+# Resultados
+
+receita_media_semanal = mean(R_otimo,dims=2)
+
+cvar_semanal = zeros(T)
+for t in 1:T
+    cvar_semanal[t] = mean(sort(R_otimo[t,:])[1:10])
+end
+println(cvar_semanal)
