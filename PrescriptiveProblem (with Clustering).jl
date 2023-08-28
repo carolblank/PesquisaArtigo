@@ -88,6 +88,11 @@ xmax = ones(15)
 ymin = 0
 ymax = 1
 q = 100         # Quantidade do contrato semenal
+F = Array(CSV.read("Forward_Price.csv", DataFrame, header=false))[:,1]
+Q = 100                         # Quantidade do contrato mensal
+P = 0.93*mean(PLD) +20          # Preço contrato mensal
+
+"""
 media_PLD = [
     mean(PLD[1,:,:]),
 
@@ -102,8 +107,7 @@ media_PLD = [
     mean(X14[4,:,:]), mean(X15[4,:,:])
 ]
 F = 0.93.*media_PLD .+15.31     # Preço contrato semanal
-Q = 100                         # Quantidade do contrato mensal
-P = 0.93*mean(PLD) +20          # Preço contrato mensal
+"""
 
 # Parametros de risco
 p = 1 / Ω .* ones(Ω);

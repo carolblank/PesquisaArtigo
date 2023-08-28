@@ -29,8 +29,8 @@ M = R.centers # get the cluster centers
 counter1=1
 counter2=1
 
-X3 = zeros(4,168,c[1])
-X2 = zeros(4,168,c[2])
+X3 = zeros(4,168,126)
+X2 = zeros(4,168,74)
 v2 = zeros(74)
 v3 = zeros(126)
 
@@ -131,7 +131,7 @@ v8 = zeros(7)
 v9 = zeros(2)
 
 for i in 1:9
-    if a4[i] == 2
+    if a4[i] == 1
         for t in 1:T
             X8[t,:,counter1] = X4[t,:,i]
         end
