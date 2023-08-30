@@ -241,3 +241,8 @@ for i in 1:71
         counter2+=1
     end
 end
+
+v = [[v2],[v3],[v4],[v5],[v6],[v7],[v8],[v9],[v10],[v11],[v12],[v13],[v14],[v15]]
+out_v = DataFrame([v2],[v3],[v4],[v5],[v6],[v7],[v8],[v9],[v10],[v11],[v12],[v13],[v14],[v15],:auto)
+out_path = string("v.csv")
+CSV.write(out_path,out_v, writeheader = false)

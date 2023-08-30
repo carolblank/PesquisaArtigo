@@ -3,6 +3,7 @@ using JuMP
 using DataFrames
 using XLSX
 using Statistics
+using CSV
 
 function n(t,w)
     if t == 1
@@ -91,6 +92,7 @@ q = 100         # Quantidade do contrato semenal
 F = Array(CSV.read("Forward_Price.csv", DataFrame, header=false))[:,1]
 Q = 100                         # Quantidade do contrato mensal
 P = 0.93*mean(PLD) +20          # Preço contrato mensal
+v = Array(CSV.read("v.csv", DataFrame, header=false))
 
 """
 media_PLD = [
